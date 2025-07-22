@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Servo Visualization Control</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .servo-body {
+            position: relative;
+            width: 120px;
+            height: 180px;
+            background: linear-gradient(145deg, #2a303c, #1a1e24);
+            border-radius: 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+            transform-style: preserve-3d;
+        }
+        
+        .servo-horn {
+            position: absolute;
+            width: 60px;
+            height: 10px;
+            background: #e63946;
+            top: 20px;
+            left: 30px;
+            border-radius: 5px;
+            transform-origin: center;
+            box-shadow: 0 0 10px rgba(230, 57, 70, 0.5);
+        }
+        
+        .servo-mounting {
+            position: absolute;
+            width: 100%;
+            height: 20px;
+            bottom: 0;
+            background: #495057;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .servo-screw {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: #adb5bd;
+            border-radius: 50%;
+        }
+        
+        .status-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .servo-rotation {
+            transition: transform 0.2s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-8">
+        <header class="mb-12 text-center">
+            <h1 class="text-3xl font-bold text-gray-800">Servo  Controller Visualization</h1>
+            <p class="text-gray-600 mt-2">Compact High-Torque Servo Motor Control System</p>
+        </header>
+        
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Servo Visualization</h2>
+                <div class="flex justify-center items-center h-64">
+                    <div id="servo-container" class="servo-body">
+                        <div id="servo-horn" class="servo-horn servo-rotation" style="transform: rotate(0deg);"></div>
+                        <div class="servo-mounting"></div>
+                        <div class="servo-screw" style="bottom: 10px; left: 30px;"></div>
+                        <div class="servo-screw" style="bottom: 10px; left: 80px;"></div>
+                    </div>
+                </div>
+                <div class="mt-6 flex items-center justify-center">
+                    <span id="servo-status" class="status-light bg-green-500"></span>
+                    <span id="status-text" class="text-gray-700">Online - Ready</span>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-semibold text-gray-800 mb-4">Control Panel</h2>
+                
+                <div class="mb-6">
+                    <label for="servo-position" class="block text-sm font-medium text-gray-700 mb-2">Position Control (0° - 180°)</label>
+                    <input type="range" id="servo-position" min="0" max="180" value="90" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>0°</span>
+                        <span>45°</span>
+                        <span>90°</span>
+                        <span>135°</span>
+                        <span>180°</span>
+                    </div>
+                    <output id="position-value" class="block text-center text-lg font-semibold text-gray-800 mt-2">90°</output>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                    <div>
+                        <label for="servo-speed" class="block text-sm font-medium text-gray-700 mb-2">Response Speed</label>
+                        <select id="servo-speed" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="0.1">Very Fast</option>
+                            <option value="0.3" selected>Fast</option>
+                            <option value="0.5">Moderate</option>
+                            <option value="0.7">Slow</option>
+                            <option value="1.0">Very Slow</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="torque-level" class="block text-sm font-medium text-gray-700 mb-2">Torque Level</label>
+                        <select id="torque-level" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                            <option value="high">High (40 kg/cm)</option>
+                            <option value="medium" selected>Medium (30 kg/cm)</option>
+                            <option value="low">Low (20 kg/cm)</option>
+                            <option value="variable">Variable</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-2 mb-6">
+                    <button id="btn-preset-0" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition">0°</button>
+                    <button id="btn-preset-45" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition">45°</button>
+                    <button id="btn-preset-90" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition">90°</button>
+                    <button id="btn-preset-135" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition">135°</button>
+                    <button id="btn-preset-180" class="px-4 py-2 bg-blue-100 text-blue-800 rounded-md hover:bg-blue-200 transition">180°</button>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button id="power-btn" class="px-4 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition flex items-center justify-center">
+                        <span class="status-light bg-white mr-2"></span>
+                        Power On
+                    </button>
+                    <button id="calibrate-btn" class="px-4 py-3 bg-yellow-500 text-white rounded-md font-medium hover:bg-yellow-600 transition">Calibrate</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 mt-8">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Servo Specifications</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-medium text-gray-800 mb-2">Mechanical</h3>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>Dimensions: 40×20×36 mm</li>
+                        <li>Weight: 52g</li>
+                        <li>Gear Material: Stainless Steel</li>
+                        <li>Mounting: 4-Point Screw</li>
+                    </ul>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-medium text-gray-800 mb-2">Electrical</h3>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>Voltage: 6.0V ~ 7.4V</li>
+                        <li>Current: 500mA (idle), 3A (stall)</li>
+                        <li>Protocol: PWM, RS485</li>
+                        <li>Connector: 3-Pin JST</li>
+                    </ul>
+                </div>
+                <div class="p-4 bg-gray-50 rounded-lg">
+                    <h3 class="font-medium text-gray-800 mb-2">Performance</h3>
+                    <ul class="text-sm text-gray-600 space-y-1">
+                        <li>Torque: Up to 40 kg/cm</li>
+                        <li>Speed: 0.11s/60° @ 7.4V</li>
+                        <li>Resolution: 0.24°</li>
+                        <li>Operating Temp: -10°C to +60°C</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const servoHorn = document.getElementById('servo-horn');
+            const positionInput = document.getElementById('servo-position');
+            const positionValue = document.getElementById('position-value');
+            const powerBtn = document.getElementById('power-btn');
+            const statusLight = document.getElementById('servo-status');
+            const statusText = document.getElementById('status-text');
+            const servoSpeed = document.getElementById('servo-speed');
+            const torqueLevel = document.getElementById('torque-level');
+            let isPoweredOn = false;
+            
+            // Position control
+            positionInput.addEventListener('input', function() {
+                if (!isPoweredOn) return;
+                
+                const angle = parseInt(this.value);
+                positionValue.textContent = angle + '°';
+                
+                const speed = parseFloat(servoSpeed.value);
+                servoHorn.style.transition = `transform ${speed}s ease-out`;
+                servoHorn.style.transform = `rotate(${angle - 90}deg)`;
+            });
+            
+            // Preset buttons
+            document.querySelectorAll('[id^="btn-preset-"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    if (!isPoweredOn) return;
+                    
+                    const angle = parseInt(this.textContent);
+                    positionInput.value = angle;
+                    positionValue.textContent = angle + '°';
+                    
+                    const speed = parseFloat(servoSpeed.value);
+                    servoHorn.style.transition = `transform ${speed}s ease-out`;
+                    servoHorn.style.transform = `rotate(${angle - 90}deg)`;
+                });
+            });
+            
+            // Power button
+            powerBtn.addEventListener('click', function() {
+                isPoweredOn = !isPoweredOn;
+                
+                if (isPoweredOn) {
+                    statusLight.className = 'status-light bg-green-500';
+                    statusText.textContent = 'Online - Active';
+                    this.innerHTML = '<span class="status-light bg-green-500 mr-2"></span>Power Off';
+                    this.className = 'px-4 py-3 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition flex items-center justify-center';
+                    
+                    // Move to default position
+                    const angle = 90;
+                    positionInput.value = angle;
+                    positionValue.textContent = angle + '°';
+                    servoHorn.style.transform = `rotate(${angle - 90}deg)`;
+                } else {
+                    statusLight.className = 'status-light bg-gray-400';
+                    statusText.textContent = 'Offline';
+                    this.innerHTML = '<span class="status-light bg-white mr-2"></span>Power On';
+                    this.className = 'px-4 py-3 bg-green-600 text-white rounded-md font-medium hover:bg-green-700 transition flex items-center justify-center';
+                    
+                    // Reset to center
+                    servoHorn.style.transform = 'rotate(0deg)';
+                }
+            });
+            
+            // Calibration button
+            document.getElementById('calibrate-btn').addEventListener('click', function() {
+                if (!isPoweredOn) {
+                    alert('Please power on the servo first');
+                    return;
+                }
+                
+                let count = 0;
+                const calibrate = () => {
+                    const angles = [0, 45, 90, 135, 180, 135, 90, 45, 0];
+                    if (count >= angles.length) return;
+                    
+                    const angle = angles[count++];
+                    positionInput.value = angle;
+                    positionValue.textContent = angle + '°';
+                    
+                    const speed = parseFloat(servoSpeed.value) / 2;
+                    servoHorn.style.transition = `transform ${speed}s ease-out`;
+                    servoHorn.style.transform = `rotate(${angle - 90}deg)`;
+                    
+                    setTimeout(calibrate, speed * 1000 + 200);
+                };
+                
+                calibrate();
+            });
+            
+            // Torque level change
+            torqueLevel.addEventListener('change', function() {
+                if (!isPoweredOn) return;
+                
+                const torque = this.value;
+                if (torque === 'high') {
+                    statusLight.className = 'status-light bg-blue-500';
+                    statusText.textContent = 'Online - High Torque';
+                } else if (torque === 'medium') {
+                    statusLight.className = 'status-light bg-green-500';
+                    statusText.textContent = 'Online - Normal Operation';
+                } else if (torque === 'low') {
+                    statusLight.className = 'status-light bg-yellow-500';
+                    statusText.textContent = 'Online - Reduced Torque';
+                } else {
+                    statusLight.className = 'status-light bg-purple-500';
+                    statusText.textContent = 'Online - Variable Torque';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
